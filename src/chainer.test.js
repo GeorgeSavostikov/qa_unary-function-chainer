@@ -7,20 +7,18 @@ describe('Chainer', () => {
     expect(chainer).toBeInstanceOf(Function);
   });
 
-  it('should apply functions in sequence', () => {
-    const double = (x) => x * 2;
-    const add = (x) => x + 2;
-    const squaring = (x) => Math.pow(x, 2);
+  it('should call functions in sequence with correct values', () => {
+    const f1 = jest.fn((x) => x * 2);
+    const f2 = jest.fn((x) => x + 2);
+    const f3 = jest.fn((x) => x ** 2);
 
-    const result = chainer([double, add, squaring])(0);
+    const result = chainer([f1, f2, f3])(0);
+
+    expect(f1).toHaveBeenCalledWith(0);
+    expect(f2).toHaveBeenCalledWith(0);
+    expect(f3).toHaveBeenCalledWith(2);
 
     expect(result).toBe(4);
-  });
-
-  it('should return the same value if no functions provided', () => {
-    const result = chainer([])(5);
-
-    expect(result).toBe(5);
   });
 
   it('should work with one function', () => {
@@ -31,12 +29,31 @@ describe('Chainer', () => {
     expect(result).toBe(6);
   });
 
-  it('should pass result of previous function to next one', () => {
-    const add = (x) => x + 1;
-    const multiply = (x) => x * 3;
+  it('should call each function exactly once', () => {
+    const f1 = jest.fn((x) => x);
+    const f2 = jest.fn((x) => x);
 
-    const result = chainer([add, multiply])(2);
+    chainer([f1, f2])(5);
 
-    expect(result).toBe(9);
+    expect(f1).toHaveBeenCalledTimes(1);
+    expect(f2).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass result from one function to the next', () => {
+    const f1 = jest.fn(() => 10);
+    const f2 = jest.fn();
+
+    chainer([f1, f2])(0);
+
+    expect(f2).toHaveBeenCalledWith(10);
+  });
+
+  it('should not call any function if array is empty', () => {
+    const fn = jest.fn();
+
+    const result = chainer([])(5);
+
+    expect(fn).not.toHaveBeenCalled();
+    expect(result).toBe(5);
   });
 });
